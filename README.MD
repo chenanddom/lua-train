@@ -169,8 +169,95 @@ lua_need_request_body on;
 
 
 
+## Nginx缓存
+
+### 缓存字典shared_dict
+性能高效，可以多个进程共享，但是为了保证数据的一致性，需要加锁
+
+```shell script
+local shared_data = ngx.shared.shared_data
+local headers = ngx.req.get_headers()
+local i = shared_data:get("n")
+
+if not i then 
+    i=1;
+	shared_data:set("n",i)
+	ngx.say("lazy set username",headers["User-Name"]..":"..i,"<br/>")
+end
+	i = shared_data:incr("n",1);
+	ngx.say("i=",i,"<br/>")
+
+```
+![缓存字典shared_dict的效果](./files/execute-lua-file-8.PNG)
+
+### lua-resty-lrucache
+```shell script
+content_by_lua_block {
+       require("mycache/mylrucache").go()
+   }
+```
+````lua
+local _M = {}
+lrucache = require "resty.lrucache"
+c, err = lrucache.new(200)  -- allow up to 200 items in the cache
+ngx.say("count=init")
+if not c then
+    error("failed to create the cache: " .. (err or "unknown"))
+end
+function _M.go()
+count = c:get("count")
+c:set("count",100)
+ngx.say("count=", count, " --<br/>")
+
+if not count then  
+    c:set("count",1)
+    ngx.say("lazy set count ", c:get("count"), "<br/>")  
+else
+c:set("count",count+1)
+ngx.say("count=", count, "<br/>")
+end
+end
+return _M
+````
+![第一次请求需要初始化](./files/execute-lua-file-10.PNG)
+![初始化完成后的请求](./files/execute-lua-file-11.PNG)
+
+* 注意
+为了能够初始化只在第一次执行，而不是每次请求都需要执行，因此需要将lua_code_cache off;这个配置注释掉
 
 
+
+### lua+redis
+```shell script
+-- 引入openresty的关于redis的依赖
+ local redis = require "resty.redis"
+    local red = redis:new()
+    red:set_timeouts(1000, 1000, 1000) -- 1 sec
+local ok, err = red:connect("127.0.0.1", 6379)
+-- 连接之后校验密码
+ -- ok, err = red:auth("你的密码")
+ if not ok then
+        ngx.say("failed to connect: ", err)
+        return
+    end
+    ok, err = red:set("dog", "an animal")
+if not ok then
+      ngx.say("failed to set dog: ", err)
+      return
+end
+ngx.say("set result: ", ok)
+local res, err = red:get("dog")
+if not res then
+    ngx.say("failed to get dog: ", err)
+    return
+end
+if res == ngx.null then
+    ngx.say("dog not found.")
+    return
+end
+  ngx.say("dog: ", res)
+```
+![nginx集成redis的执行结果](./files/execute-lua-file-9.PNG)
 
 
 
