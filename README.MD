@@ -35,3 +35,148 @@ ngx.say("</html><head>this page drived by lua</head><body>this is body..........
 在http模块下添加
 lua_code_cache off;
 启动会提示损害性能
+
+### 获取uri上的请求参数
+```shell script
+location / {
+	default_type text/html;
+	content_by_lua_file /usr/local/openresty/lua_codes/resp-1.lua;
+}	  
+# 获取单个变量
+location / {
+	default_type text/html;
+	content_by_lua_block{
+		ngx.say(ngx.var.arg_username)
+	}
+}
+```
+resp-1.lua
+```lua
+    local uri_args = ngx.req.get_uri_args();
+    for k,v in pairs(uri_args) do
+    		if type(v) =="table" then
+    			ngx.say(k, " : ", table.concat(v, ", "), "<br/>")  	
+    		else
+    		    ngx.say(k, ": ", v, "<br/>") 
+    		end
+    end	
+
+
+
+```
+执行结果
+![获取uri上的请求参数](./files/execute-lua-file-1.PNG)
+![获取uri上的请求参数](./files/execute-lua-block-2.PNG)
+
+* 在处理http请求时还可以使用
+
+set_by_lua
+修改nginx变量
+
+rewrite_by_lua
+修改uri
+
+access_by_lua
+访问控制
+
+header_filter_by_lua
+修改响应头
+
+boy_filter_by_lua
+修改响应体
+
+log_by_lua
+日志
+
+
+### 获取请求头上的信息
+```shell script
+location / {
+ 	default_type text/html;
+	content_by_lua_file /usr/local/openresty/lua_codes/resp-1.lua;
+}
+```
+```lua
+local headers = ngx.req.get_headers()
+ngx.say("Host:",headers["Host"],"<br/>")
+ngx.say("user-agent:",headers["User-Agent"],"<br/>")
+ngx.say("user-agent:",headers.User-Agent,"<br/>")
+for k,v in pairs(headers) do
+	if type(v) == "table" then
+		ngx.say(k,":",table.concat(v,","),"<br/>")
+	else
+		ngx.say(k,":",v,"<br/>")	
+	end
+end
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
