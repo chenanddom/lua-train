@@ -262,8 +262,63 @@ end
 
 
 
+### Nginx+Lua+MySQL
 
-
+````shell script
+location / {
+	default_type text/html;
+	content_by_lua_file /usr/local/openresty/lua_codes/mysql_store.lua;
+}
+````
+```lua
+local mysql = require "resty.mysql"
+    local db, err = mysql:new()
+    if not db then
+        ngx.say("failed to instantiate mysql: ", err)
+        return
+    end
+    db:set_timeout(1000) -- 1 sec
+-- 连接数据库
+    local ok, err, errcode, sqlstate = db:connect{
+        host = "127.0.0.1",
+        port = 3306,
+        database = "lua_db",
+        user = "root",
+        password = "root",
+        charset = "utf8",
+        max_packet_size = 1024 * 1024,
+    }
+    ngx.say("connected to mysql.<br>")
+    local res, err, errcode, sqlstate = db:query("drop table if exists cats")
+    if not res then
+        ngx.say("bad result: ", err, ": ", errcode, ": ", sqlstate, ".")
+        return
+    end
+    res, err, errcode, sqlstate =
+        db:query("create table cats "
+                 .. "(id serial primary key, "
+                 .. "name varchar(5))")
+    if not res then
+        ngx.say("bad result: ", err, ": ", errcode, ": ", sqlstate, ".")
+        return
+    end
+    ngx.say("table cats created.")
+    res, err, errcode, sqlstate =
+        db:query("select * from employees")
+    if not res then
+        ngx.say("bad result: ", err, ": ", errcode, ": ", sqlstate, ".")
+        return
+    end
+ 
+    local cjson = require "cjson"
+    ngx.say("result: ", cjson.encode(res))
+    local ok, err = db:set_keepalive(10000, 100)
+    if not ok then
+        ngx.say("failed to set keepalive: ", err)
+        return
+    end
+```
+![执行lua查询mysql数据库的效果](./files/execute-lua-file-12.PNG)
 
 
 
