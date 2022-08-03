@@ -132,9 +132,40 @@ end
 ```
 ![获取post请求参数](./files/execute-lua-file-3.PNG)
 
+### http协议版本
+
+```lua
+ngx.say("ngx.req.http_version : ", ngx.req.http_version(), "<br/>")
+```
+![http协议版本](./files/execute-lua-file-4.PNG)
+
+
+### 请求方法
+
+```lua
+ngx.say("ngx.req.get_method : ", ngx.req.get_method(), "<br/>")  
+```
+![请求方法](./files/execute-lua-file-5.PNG)
+### 原始的请求头内容  
+
+```lua
+ngx.say("ngx.req.raw_header : ",  ngx.req.raw_header(), "<br/>")  
+```
+![原始的请求头内容](./files/execute-lua-file-6.PNG)
 
 
 
+### body内容体  
+
+```lua
+ngx.say("ngx.req.get_body_data() : ", ngx.req.get_body_data(), "<br/>")
+```
+![body内容体](./files/execute-lua-file-7.PNG)
+需要注意的是，如果nginx的功能主要是转发，并不需要对数据进行处理如果需要对数据进行处理，需要在配置文件添加如下配置：
+```shell script
+#在http模块下添加配置
+lua_need_request_body on;
+```
 
 
 
