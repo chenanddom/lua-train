@@ -109,12 +109,28 @@ for k,v in pairs(headers) do
 	end
 end
 ```
+![获取请求头的效果](./files/execute-lua-file-2.PNG)
 
-
-
-
-
-
+### 获取post请求参数
+```shell script
+location / {
+ 	default_type text/html;
+	content_by_lua_file /usr/local/openresty/lua_codes/resp-1.lua;
+}
+```
+```lua
+ngx.req.read_body()
+ngx.say("post args begin","<br/>")
+local post_args = ngx.req.get_post_args()
+for k,v in pairs(post_args) do
+	if type(v)=="table" then
+		ngx.say(k,":",table,concat(v,", "),"<br/>")
+	else
+		ngx.say(k,":",v,"<br/>")
+	end
+end
+```
+![获取post请求参数](./files/execute-lua-file-3.PNG)
 
 
 
